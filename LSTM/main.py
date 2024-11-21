@@ -64,7 +64,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Train model
-train_model(model, train_loader, criterion, optimizer, device, num_epochs=10)
+train_model(model, train_loader, criterion, optimizer, device, num_epochs=1)
 
 # Evaluate model
 accuracy = evaluate_model(model, test_loader, device, class_names, save_cm_path="confusion_matrix_lstm.png")

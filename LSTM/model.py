@@ -77,9 +77,9 @@ def evaluate_model(model, data_loader, device, class_names, save_cm_path=None):
     # Display results
     print("Classification Report:\n", report)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(30, 30))
     disp.plot(cmap=plt.cm.Blues, ax=ax)
-    plt.title("Confusion Matrix")
+    plt.title("Confusion Matrix_LSTM")
 
     # Save confusion matrix as image, if specified
     if save_cm_path:
