@@ -51,7 +51,7 @@ def train_model(model, train_loader, criterion, optimizer, device, num_epochs=1)
         print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {total_loss / len(train_loader):.4f}")
 
 
-def evaluate_model(model, data_loader, device, class_names, save_cm_path=None):
+def evaluate_model(model, data_loader, device, class_names, save_cm_path=None, vector_format=None):
     model.eval()
     all_preds = []
     all_labels = []
@@ -76,16 +76,19 @@ def evaluate_model(model, data_loader, device, class_names, save_cm_path=None):
     disp.plot(cmap=plt.cm.Blues, ax=ax)
     plt.title("Confusion Matrix_CNN")
 
-    # Save confusion matrix as image, if specified
+    # Save confusion matrix as a vector image, if specified
     if save_cm_path:
-        plt.savefig(save_cm_path)
-        print(f"Confusion matrix saved to: {save_cm_path}")
+        # Zamiana formatu na grafikę wektorową, np. SVG
+        save_path = f"{save_cm_path}.{vector_format}"
+        plt.savefig(save_path, format=vector_format)
+        print(f"Confusion matrix saved to: {save_path}")
     else:
         plt.show()
 
     # Calculate accuracy
     accuracy = (cm.diagonal().sum() / cm.sum()) * 100
     return accuracy
+
 
 
 def save_model(model, scaler, class_names, file_path):

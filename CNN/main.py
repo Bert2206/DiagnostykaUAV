@@ -64,11 +64,16 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Train model
-train_model(model, train_loader, criterion, optimizer, device, num_epochs=1)
+#train_model(model, train_loader, criterion, optimizer, device, num_epochs=150)
+
+# Załaduj model z pliku
+checkpoint = torch.load('uav_cnn_model.pth')
+model.load_state_dict(checkpoint['model_state_dict'])
+model.to(device)
 
 # Evaluate model
-accuracy = evaluate_model(model, test_loader, device, class_names, save_cm_path="confusion_matrix_cnn.png")
+accuracy = evaluate_model(model, test_loader, device, class_names, save_cm_path="confusion_matrix_cnn", vector_format='svg')
 print(f"Accuracy: {accuracy:.2f}%")
 
 # Save model
-save_model(model, scaler, class_names, "uav_cnn_model.pth")
+#save_model(model, scaler, class_names, "uav_cnn_model.pth")
