@@ -1,0 +1,17 @@
+Classification Report:
+              precision    recall  f1-score   support
+
+        0000     0.7842    0.8652    0.8227      1840
+        0200     0.6341    0.5532    0.5909       658
+        0400     0.6794    0.6534    0.6661       655
+        0402     0.8064    0.7344    0.7687       448
+        1000     0.9074    0.8448    0.8750        58
+        3000     0.8814    0.8350    0.8576       703
+
+    accuracy                         0.7678      4362
+   macro avg     0.7822    0.7477    0.7635      4362
+weighted avg     0.7654    0.7678    0.7650      4362
+
+Accuracy: 76.78%
+Cohen's Kappa: 0.6809
+Matthews Correlation Coefficient: 0.6822

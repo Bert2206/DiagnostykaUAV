@@ -3,6 +3,7 @@ import os
 import torch.nn as nn
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+from wyniki import analyze_results
 
 
 class UAVLSTMClassifier(nn.Module):
@@ -40,11 +41,21 @@ class UAVLSTMClassifier(nn.Module):
         return out
 
 
-def train_model(model, train_loader, criterion, optimizer, device, num_epochs=1):
+def train_model(model, train_loader, criterion, optimizer, device, num_epochs=1, test_loader=None):
     model.to(device)
-    for epoch in range(num_epochs):
+    history = {
+        "train_loss": [],
+        "val_loss": [],
+        "train_acc": [],
+        "val_acc": []
+    }
+
+    for epoch in range(1, num_epochs + 1):
         model.train()
-        total_loss = 0.0
+        running_loss = 0.0
+        correct_train = 0
+        total_train = 0
+
         for batch_X, batch_y in train_loader:
             batch_X, batch_y = batch_X.to(device), batch_y.to(device)
             optimizer.zero_grad()
@@ -52,46 +63,70 @@ def train_model(model, train_loader, criterion, optimizer, device, num_epochs=1)
             loss = criterion(outputs, batch_y)
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {total_loss / len(train_loader):.4f}")
+
+            running_loss += loss.item()
+            _, preds = torch.max(outputs, 1)
+            correct_train += (preds == batch_y).sum().item()
+            total_train += batch_y.size(0)
+
+        train_loss = running_loss / len(train_loader)
+        train_acc = (correct_train / total_train) * 100
+        history["train_loss"].append(train_loss)
+        history["train_acc"].append(train_acc)
+
+        # Ewaluacja na zbiorze walidacyjnym (opcjonalna)
+        if test_loader:
+            model.eval()
+            running_val_loss = 0.0
+            correct_val = 0
+            total_val = 0
+
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(device), labels.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
+
+                    running_val_loss += loss.item()
+                    _, preds = torch.max(outputs, 1)
+                    correct_val += (preds == labels).sum().item()
+                    total_val += labels.size(0)
+
+            val_loss = running_val_loss / len(test_loader)
+            val_acc = (correct_val / total_val) * 100
+            history["val_loss"].append(val_loss)
+            history["val_acc"].append(val_acc)
+
+            print(f"Epoch [{epoch}/{num_epochs}] - "
+                  f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.2f}%"
+                  f", Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.2f}%")
+        else:
+            print(f"Epoch [{epoch}/{num_epochs}] - "
+                  f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.2f}%")
+
+    return history
 
 
-def evaluate_model(model, data_loader, device, class_names, save_cm_path=None):
+
+def evaluate_model(model, data_loader, device, class_names, history=None):
     model.eval()
     all_preds = []
     all_labels = []
+    all_probs = []
 
     with torch.no_grad():
         for inputs, labels in data_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
+            probs = torch.nn.functional.softmax(outputs, dim=1)
 
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
+            all_probs.extend(probs.cpu().numpy())
 
-    # Metrics
-    report = classification_report(all_labels, all_preds, target_names=class_names)
-    cm = confusion_matrix(all_labels, all_preds)
-
-    # Display results
-    print("Classification Report:\n", report)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
-    fig, ax = plt.subplots(figsize=(30, 30))
-    disp.plot(cmap=plt.cm.Blues, ax=ax)
-    plt.title("Confusion Matrix_LSTM")
-
-    # Save confusion matrix as image, if specified
-    if save_cm_path:
-        plt.savefig(save_cm_path)
-        print(f"Confusion matrix saved to: {save_cm_path}")
-    else:
-        plt.show()
-
-    # Calculate accuracy
-    accuracy = (cm.diagonal().sum() / cm.sum()) * 100
-    return accuracy
-
+    # Przekazanie wyników do `wyniki.py`
+    analyze_results(all_labels, all_preds, all_probs, class_names, history)
 
 def save_model(model, scaler, class_names, file_path):
     try:

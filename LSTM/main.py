@@ -9,12 +9,12 @@ import torch.nn as nn
 from model import UAVLSTMClassifier, train_model, evaluate_model, save_model
 
 # Load and preprocess data
-folder_path = r'C:\Users\Admin\PycharmProjects\DiagnostykaUAV\Parrot_Bebop_2\Range_data'
+folder_path = r'C:\Users\Admin\PycharmProjects\DiagnostykaUAV\Eksperymenty_accel'
 file_pattern = folder_path + '\\*.csv'
 data_frames = []
 
 for file_path in glob.glob(file_pattern):
-    data = pd.read_csv(file_path)
+    data = pd.read_csv(file_path, sep=';')
     match = re.search(r'_(\d{4}).csv$', file_path)  # Match fault code
     if match:
         fault_code = match.group(1)
@@ -49,8 +49,8 @@ X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1)
 # Create datasets and loaders
 train_dataset = TensorDataset(X_train, y_train)
 test_dataset = TensorDataset(X_test, y_test)
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 # Initialize LSTM model
 input_dim = X_train.shape[2]  # Number of features
@@ -64,11 +64,11 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Train model
-train_model(model, train_loader, criterion, optimizer, device, num_epochs=1)
+history = train_model(model, train_loader, criterion, optimizer, device, num_epochs=200, test_loader=test_loader)
 
 # Evaluate model
-accuracy = evaluate_model(model, test_loader, device, class_names, save_cm_path="confusion_matrix_lstm.png")
-print(f"Accuracy: {accuracy:.2f}%")
+evaluate_model(model, test_loader, device, class_names, history=history)
+
 
 # Save model
 save_model(model, scaler, class_names, "uav_lstm_model.pth")
