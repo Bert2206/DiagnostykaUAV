@@ -62,21 +62,29 @@ def plot_accuracy_loss(history, loss_path="loss_curve.svg", acc_path="accuracy_c
 
 
 def plot_roc_auc(all_labels, all_probs, class_names, save_path="roc_auc_curve.svg"):
-    """Rysuje i zapisuje wykres ROC-AUC dla każdej klasy."""
-    y_true_bin = label_binarize(all_labels, classes=np.arange(len(class_names)))
-    fig, ax = plt.subplots(figsize=(10, 8))
-    for i in range(len(class_names)):
-        fpr, tpr, _ = roc_curve(y_true_bin[:, i], np.array(all_probs)[:, i])
-        roc_auc = auc(fpr, tpr)
-        ax.plot(fpr, tpr, label=f"{class_names[i]} (AUC = {roc_auc:.2f})")
+    probs = np.asarray(all_probs)
+    n_classes = len(class_names)
 
-    ax.plot([0, 1], [0, 1], 'k--')
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title("ROC-AUC Curve")
-    ax.legend(loc="lower right")
+    plt.figure(figsize=(10, 8))
+
+    if nclasses == 2:
+        # Binary classification – take the probability of the positive class (column 1)
+        fpr, tpr,  = roc_curve(all_labels, probs[:, 1])
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
+    else:
+        # Multi-class (one-vs-rest) ROC curves
+        y_true_bin = label_binarize(all_labels, classes=np.arange(n_classes))
+        for i in range(nclasses):
+            fpr, tpr,  = roc_curve(y_true_bin[:, i], probs[:, i])
+            roc_auc = auc(fpr, tpr)
+            plt.plot(fpr, tpr, label=f"{class_names[i]} (AUC = {roc_auc:.2f})")
+
+    plt.plot([0, 1], [0, 1], "k--")
+    plt.xlim([0.0, 1.0]);  plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate");  plt.ylabel("True Positive Rate")
+    plt.title("ROC–AUC Curve")
+    plt.legend(loc="lower right")
     plt.savefig(save_path, format="svg")
     plt.show()
 
