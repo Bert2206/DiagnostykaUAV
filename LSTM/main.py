@@ -34,22 +34,27 @@ class_names = [str(cls) for cls in le.classes_]
 # Prepare input data
 X = all_data.drop(columns=['Fault_Code']).values
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.25, random_state=42)
 
 # Normalize input features
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
+X_val = scaler.transform(X_val)
 X_test = scaler.transform(X_test)
 
 # Reshape for LSTM (batch, sequence, features)
-X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1)  # Sequence length = 1
+X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1)
+X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1)
 X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1)
 
 # Create datasets and loaders
 train_dataset = TensorDataset(X_train, y_train)
+val_dataset = TensorDataset(X_val, y_val)
 test_dataset = TensorDataset(X_test, y_test)
+
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 # Initialize LSTM model
@@ -64,7 +69,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Train model
-history = train_model(model, train_loader, criterion, optimizer, device, num_epochs=200, test_loader=test_loader)
+history = train_model(model, train_loader, criterion, optimizer, device, num_epochs=200, test_loader=val_loader)
 
 # Evaluate model
 evaluate_model(model, test_loader, device, class_names, history=history)
