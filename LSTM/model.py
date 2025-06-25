@@ -4,6 +4,7 @@ import torch.nn as nn
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from wyniki import analyze_results
+from sklearn.metrics import accuracy_score
 
 
 class UAVLSTMClassifier(nn.Module):
@@ -74,7 +75,6 @@ def train_model(model, train_loader, criterion, optimizer, device, num_epochs=1,
         history["train_loss"].append(train_loss)
         history["train_acc"].append(train_acc)
 
-        # Ewaluacja na zbiorze walidacyjnym (opcjonalna)
         if test_loader:
             model.eval()
             running_val_loss = 0.0
@@ -125,7 +125,9 @@ def evaluate_model(model, data_loader, device, class_names, history=None):
             all_labels.extend(labels.cpu().numpy())
             all_probs.extend(probs.cpu().numpy())
 
-    # Przekazanie wyników do `wyniki.py`
+    test_accuracy = accuracy_score(all_labels, all_preds)
+    print(f"Dokładność testu: {test_accuracy * 100:.2f}%")
+
     analyze_results(all_labels, all_preds, all_probs, class_names, history)
 
 def save_model(model, scaler, class_names, file_path):

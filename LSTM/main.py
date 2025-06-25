@@ -9,12 +9,12 @@ import torch.nn as nn
 from model import UAVLSTMClassifier, train_model, evaluate_model, save_model
 
 # Load and preprocess data
-folder_path = r'C:\Users\Admin\PycharmProjects\DiagnostykaUAV\Eksperymenty_accel'
+folder_path = r'C:\Users\Admin\PycharmProjects\DiagnostykaUAV\Eksperymenty_accelP'
 file_pattern = folder_path + '\\*.csv'
 data_frames = []
 
 for file_path in glob.glob(file_pattern):
-    data = pd.read_csv(file_path, sep=';')
+    data = pd.read_csv(file_path)
     match = re.search(r'_(\d{4}).csv$', file_path)  # Match fault code
     if match:
         fault_code = match.group(1)
@@ -69,7 +69,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Train model
-history = train_model(model, train_loader, criterion, optimizer, device, num_epochs=200, test_loader=val_loader)
+history = train_model(model, train_loader, criterion, optimizer, device, num_epochs=100, test_loader=val_loader)
 
 # Evaluate model
 evaluate_model(model, test_loader, device, class_names, history=history)
